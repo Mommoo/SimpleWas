@@ -1,17 +1,21 @@
-import java.io.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Main {
-    public static void main(String[] args) throws Exception{
-        File file = new File("hello.conf");
-        FileOutputStream out = new FileOutputStream(file);
-        out.write("hello~".getBytes());
-        out.flush();
-        out.close();
+    private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
-        file = new File("hello.conf");
-        FileInputStream inputStream = new FileInputStream(file);
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-        System.out.println(bufferedReader.readLine());
-        bufferedReader.close();
+    public static void main(String[] args) {
+        String str = null;
+
+//        try {
+//            str.substring(0);
+//        } catch (Exception e) {
+//            logger.error("dfdf", e);
+//        }
+        logger.trace("trace");
+        logger.debug("debug");
+        logger.info("info", "what?");
+        logger.warn("warn", "what?", 2);
+        logger.error("error");
     }
 }
