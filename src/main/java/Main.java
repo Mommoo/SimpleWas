@@ -5,13 +5,6 @@ public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
-        String str = null;
-
-//        try {
-//            str.substring(0);
-//        } catch (Exception e) {
-//            logger.error("dfdf", e);
-//        }
         logger.trace("trace");
         logger.debug("debug");
         logger.info("info", "what?");
