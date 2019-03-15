@@ -57,13 +57,14 @@ class HttpRequestParser {
         int typeEndIndex = headerLine.indexOf(":");
 
         if (typeEndIndex == -1) {
-            logger.info("Http 프로토콜 스펙에 맞지 않는 헤더 데이터 입니다.");
+            logger.info("Http 프로토콜 스펙에 맞지 않는 데이터 구성 입니다.");
             return;
         }
 
-        HeaderType headerType = HeaderType.of(headerLine.substring(0, typeEndIndex).trim());
+        String headerTypeData = headerLine.substring(0, typeEndIndex).trim();
+        HeaderType headerType = HeaderType.of(headerTypeData);
         if (headerType == null) {
-            logger.info("Http 프로토콜 스펙에 맞지 않는 헤더 타입입니다.");
+            logger.info("WAS에 등록되지 않은 헤더 타입입니다.(" + headerTypeData +")");
             return;
         }
 
@@ -121,6 +122,15 @@ class HttpRequestParser {
             @Override
             public String getParameterValue(String parameterName) {
                 return queryStrings.get(parameterName);
+            }
+
+            @Override
+            public String toString() {
+                return "Method : " + getMethod()+"\n"+
+                        "URI : " + getURI()+"\n"+
+                        "Protocol : " + getProtocol()+"\n"+
+                        "Version : " +getVersion()+"\n"+
+                        "headers : " + headerMap +"\n";
             }
         };
     }

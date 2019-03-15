@@ -6,7 +6,7 @@
 
     <groupId>com.mommoo</groupId>
     <artifactId>simple-was</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
 
     <properties>
         <!-- 메이븐 자바 8버전 설정 -->
@@ -15,6 +15,7 @@
         <junit.version>5.4.0</junit.version>
         <json.simple.version>1.1.1</json.simple.version>
         <log.back.version>1.2.3</log.back.version>
+        <class.path.lib>lib</class.path.lib>
     </properties>
 
     <build>
@@ -26,19 +27,47 @@
             </plugin>
 
             <!-- Jar 패키징을 위한 플러그인 설정 -->
+            <!-- Jar 패키징에 디펜던시 까지 추가해준다. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.0.2</version>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.4.1</version>
                 <configuration>
+                    <!-- get all project dependencies -->
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <appendAssemblyId>false</appendAssemblyId>
                     <archive>
                         <manifest>
                             <mainClass>Main</mainClass>
-                            <addClasspath>true</addClasspath>
-                            <addExtensions>true</addExtensions>
                         </manifest>
                     </archive>
+
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <!-- bind to the packaging phase -->
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- 기존 메이븐의 Jar 패키징을 막는다. -->
+            <!-- 위 maven-assembly-plugin 을 사용한다. -->
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.0.2</version>
+                <executions>
+                    <execution>
+                        <id>default-jar</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

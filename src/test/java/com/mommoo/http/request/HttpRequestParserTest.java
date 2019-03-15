@@ -9,7 +9,7 @@ import java.util.StringTokenizer;
 
 public class HttpRequestParserTest {
     private static final String MOCK_GET_HTTP_REQUEST =
-            "Get /test/test.htm HTTP/1.1\n" +
+            "Get /serverConfigurationCreateTest/serverConfigurationCreateTest.htm HTTP/1.1\n" +
             "Accept: */*\n" +
             "Accept-Language: ko\n" +
             "Accept-Encoding: gzip, deflate\n" +
@@ -39,7 +39,7 @@ public class HttpRequestParserTest {
         Assertions.assertEquals(request.getMethod(), Method.GET);
         Assertions.assertEquals(request.getProtocol(), "HTTP");
         Assertions.assertEquals(request.getVersion(), "1.1");
-        Assertions.assertEquals(request.getURI(), "/test/test.htm");
+        Assertions.assertEquals(request.getURI(), "/serverConfigurationCreateTest/serverConfigurationCreateTest.htm");
         Assertions.assertEquals(request.getHeader(HeaderType.ACCEPT), "*/*");
         Assertions.assertEquals(request.getHeader(HeaderType.ACCEPT_LANGUAGE), "ko");
         Assertions.assertEquals(request.getHeader(HeaderType.ACCEPT_ENCODING), "gzip, deflate");
