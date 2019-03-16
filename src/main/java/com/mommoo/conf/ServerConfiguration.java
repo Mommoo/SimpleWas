@@ -1,78 +1,101 @@
 package com.mommoo.conf;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.*;
 
 public class ServerConfiguration {
-    private static final Logger logger = LoggerFactory.getLogger(ServerConfiguration.class);
-
-    private static final int MIN_THREAD_COUNT = 1;
-    private static final int MAX_THREAD_COUNT = 50;
-
     private static final String THREAD_COUNT = "threadCount";
+    private static final String SERVER_NAME = "serverName";
     private static final String PORT_NUMBER = "portNumber";
-    private static final String HOME_PATH = "homePath";
+    private static final String DOCUMENT_PATH = "documentPath";
+    private static final String LOG_PATH = "logPath";
     private static final String INDEX_PAGE = "indexPage";
+    private static final String ERROR_PAGE = "errorPage";
 
-    private int threadCount = 30;
-    private int portNumber = 8080;
-    private String homePath = "home";
-    private String indexPage = "index.html";
+    private static final String[] KEYS = {THREAD_COUNT, SERVER_NAME, PORT_NUMBER, DOCUMENT_PATH, LOG_PATH, INDEX_PAGE, ERROR_PAGE};
 
-    public ServerConfiguration () {
+    private static final String CODE = "code";
+    private static final String PAGE = "page";
 
-    }
+    private Map<Integer, List<ServerSpec>> serverSpecFinder = new HashMap<>();
 
-    public ServerConfiguration(String configFilePath) {
-        File file = new File(configFilePath);
+    public ServerConfiguration(String configFilePath) throws IOException, ClassCastException, ParseException, JSONKeyNotFoundException {
+        FileReader fileReader = new FileReader(new File(configFilePath));
+        JSONArray serverSpecJSONArray = (JSONArray) new JSONParser().parse(fileReader);
 
-        try {
-            FileReader fileReader = new FileReader(file);
-            JSONObject configJSONObject = (JSONObject) new JSONParser().parse(fileReader);
-            long threadCount = (Long)configJSONObject.get(THREAD_COUNT);
-            this.threadCount = (int)Math.max(MIN_THREAD_COUNT, Math.min(threadCount, MAX_THREAD_COUNT));
+        for (Object serverSpecObject : serverSpecJSONArray) {
+            JSONObject serverSpecJSON = (JSONObject) serverSpecObject;
 
-            long portNumber = (Long)configJSONObject.get(PORT_NUMBER);
-            if (0 < portNumber  && portNumber <= 65535) {
-                this.portNumber = (int)portNumber;
+            if (!isContainServerSpecKeys(serverSpecJSON)) {
+                throw new JSONKeyNotFoundException();
             }
 
-            this.homePath = (String) configJSONObject.get(HOME_PATH);
-
-            this.indexPage = (String) configJSONObject.get(INDEX_PAGE);
-
-
-        } catch (ParseException e) {
-            logger.error("서버 configuration 파일 구성이 JSON이 아닙니다.", e);
-        } catch (ClassCastException ce) {
-            logger.error("서버 configuration 요소의 데이터 타입이 맞지 않습니다.");
-        } catch (NullPointerException ne) {
-            logger.error("서버 configuration 요소 키 값이 존재하지 않습니다.");
-        } catch (IOException io) {
-            logger.info("서버 configuration 파일이 존재하지 않습니다.");
+            ServerSpec serverSpec = parseServerSpec(serverSpecJSON);
+            addServerSpec(serverSpec);
         }
     }
 
-    public int getThreadCount() {
-        return this.threadCount;
+    private static boolean isContainServerSpecKeys(JSONObject jsonObject) {
+        boolean isKeyExist = Arrays.stream(KEYS).allMatch(jsonObject::containsKey);
+
+        if (!isKeyExist) {
+            return false;
+        }
+
+        JSONArray errorPageJSONArray = (JSONArray) jsonObject.get(ERROR_PAGE);
+        for (Object errorPageObject : errorPageJSONArray) {
+            JSONObject errorPageJSONObject = (JSONObject) errorPageObject;
+
+            if ( errorPageJSONObject.containsKey(CODE) && errorPageJSONObject.containsKey(PAGE)) {
+                continue;
+            }
+
+            return false;
+        }
+        return true;
     }
 
-    public int getPortNumber() {
-        return this.portNumber;
+    private ServerSpec parseServerSpec(JSONObject jsonObject) throws ClassCastException {
+        ServerSpecBuilder serverSpecBuilder
+                = new ServerSpecBuilder()
+                .setThreadCount((Long) jsonObject.get(THREAD_COUNT))
+                .setServerName((String) jsonObject.get(SERVER_NAME))
+                .setPortNumber((Long) jsonObject.get(PORT_NUMBER))
+                .setDocumentPath((String) jsonObject.get(DOCUMENT_PATH))
+                .setLogPath((String) jsonObject.get(LOG_PATH))
+                .setIndexPage((String) jsonObject.get(INDEX_PAGE));
+
+        JSONArray errorPageJSONArray = (JSONArray)jsonObject.get(ERROR_PAGE);
+        for (Object errorPageObject : errorPageJSONArray) {
+            JSONObject errorPageJSONObject = (JSONObject) errorPageObject;
+            serverSpecBuilder.addErrorPage((long)errorPageJSONObject.get(CODE), (String) errorPageJSONObject.get(PAGE));
+        }
+
+        return serverSpecBuilder.build();
     }
 
-    public String getRootHomePath() {
-        return this.homePath;
+    private void addServerSpec(ServerSpec serverSpec) {
+        if (!serverSpecFinder.containsKey(serverSpec.getPortNumber())) {
+            serverSpecFinder.put(serverSpec.getPortNumber(), new ArrayList<>());
+        }
+
+        serverSpecFinder
+                .get(serverSpec.getPortNumber())
+                .add(serverSpec);
     }
 
-    public String getIndexPage() {
-        return this.indexPage;
+    public List<ServerSpec> getServerSpecs(int portNumber) {
+        return Collections.unmodifiableList(serverSpecFinder.get(portNumber));
+    }
+
+    public List<Integer> getServerPortList() {
+        return Collections.unmodifiableList(new ArrayList<>(serverSpecFinder.keySet()));
     }
 }

@@ -5,58 +5,41 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.util.Map;
 
 public class ServerConfigurationTest {
-
     @Test()
-    @DisplayName("서버 Configuratuon 파일 객체화 테스트")
-    public void serverConfigurationCreateTest() {
+    @DisplayName("ServerConfiguration 객체 생성 테스트")
+    public void serverConfigurationCreateTest() throws Exception {
         String serverConfigFilePath = FileUtils.getResourcePathOrNull("server.json");
         ServerConfiguration serverConfiguration = new ServerConfiguration(serverConfigFilePath);
-
-        Assertions.assertEquals(serverConfiguration.getThreadCount(), 22);
-        Assertions.assertEquals(serverConfiguration.getPortNumber(), 5514);
-        Assertions.assertEquals(serverConfiguration.getRootHomePath(), "home");
-        Assertions.assertEquals(serverConfiguration.getIndexPage(), "index.html");
     }
 
     @Test()
-    @DisplayName("Index 페이지 로드 테스트")
-    public void loadIndexPageFileTest() {
+    @DisplayName("ServerSpec 객체 생성 및 값 테스트")
+    public void serverSpecTest() throws Exception {
         String serverConfigFilePath = FileUtils.getResourcePathOrNull("server.json");
         ServerConfiguration serverConfiguration = new ServerConfiguration(serverConfigFilePath);
-        String indexPagePath = serverConfiguration.getRootHomePath() + "/" + serverConfiguration.getIndexPage();
-        indexPagePath = FileUtils.getResourcePathOrNull(indexPagePath);
 
-        StringBuilder stringBuilder = new StringBuilder();
-
-        try {
-            Path path = Paths.get(indexPagePath);
-            FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ);
-            ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
-            Charset charset = Charset.defaultCharset();
-
-
-            while (fileChannel.read(byteBuffer) != -1 ) {
-                byteBuffer.flip();
-                stringBuilder.append(charset.decode(byteBuffer).toString());
-                byteBuffer.clear();
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        for (ServerSpec serverSpec : serverConfiguration.getServerSpecs(1111)) {
+            doAssertEquals(serverSpec, 1);
         }
 
-        Assertions.assertTrue(stringBuilder.toString().contains("Hello World!!"));
+        for (ServerSpec serverSpec : serverConfiguration.getServerSpecs(2222)) {
+            doAssertEquals(serverSpec, 2);
+        }
     }
 
-    private static String getResourcePath() {
-        return ServerConfigurationTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+    private void doAssertEquals(ServerSpec serverSpec, int prefix) {
+        Assertions.assertEquals(serverSpec.getThreadCount(), 20 - prefix);
+        Assertions.assertEquals(serverSpec.getServerName(), "mommoo"+prefix+".com");
+        Assertions.assertEquals(serverSpec.getPortNumber(), 1000*prefix + 100*prefix + 10*prefix + prefix);
+        Assertions.assertEquals(serverSpec.getDocumentPath(), "home"+prefix);
+        Assertions.assertEquals(serverSpec.getLogPath(), "log" +prefix);
+        Assertions.assertEquals(serverSpec.getIndexPage(), "index"+prefix+".html");
+        Map<Integer, String> errorPage = serverSpec.getErrorPage();
+        for (int code : errorPage.keySet()) {
+            Assertions.assertEquals(errorPage.get(code), "error"+prefix+code+".html");
+        }
     }
 }

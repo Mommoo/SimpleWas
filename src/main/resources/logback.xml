@@ -8,18 +8,38 @@
         </encoder>
     </appender>
 
-    <!-- 일자 별로 로그를 관리하기 위한 설정 -->
-    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>log/%d{yyyy-MM-dd}.log</fileNamePattern>
-        </rollingPolicy>
-        <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5level] [%logger{0}] : %msg%n</pattern>
-        </encoder>
+    <appender name="SIFT" class="ch.qos.logback.classic.sift.SiftingAppender">
+        <discriminator>
+            <key>logPath</key>
+            <defaultValue>unknown</defaultValue>
+        </discriminator>
+
+        <sift>
+            <!--<appender name="FILE-${logPath}" class="ch.qos.logback.core.FileAppender">-->
+                <!--<file>log/${logPath}.log</file>-->
+                <!--<append>false</append>-->
+                <!--<layout class="ch.qos.logback.classic.PatternLayout">-->
+                    <!--<pattern>%d [%thread] %level %mdc %logger{35} - %msg%n</pattern>-->
+                <!--</layout>-->
+            <!--</appender>-->
+
+            <!-- 일자 별로 로그를 관리하기 위한 설정 -->
+            <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                    <fileNamePattern>${logPath}/%d{yyyy-MM-dd}.log</fileNamePattern>
+                </rollingPolicy>
+                <encoder>
+                    <pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5level] [%logger{0}] : %msg%n</pattern>
+                </encoder>
+            </appender>
+        </sift>
     </appender>
+
+
 
     <root level="debug">
         <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="FILE"/>
+        <appender-ref ref="SIFT" />
+        <!--<appender-ref ref="FILE"/>-->
     </root>
 </configuration>
