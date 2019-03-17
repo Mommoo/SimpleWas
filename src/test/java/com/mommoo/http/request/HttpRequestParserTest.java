@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.util.StringTokenizer;
 
 public class HttpRequestParserTest {
-    private static final String MOCK_GET_HTTP_REQUEST =
+    public static final String MOCK_GET_HTTP_REQUEST =
             "Get /serverConfigurationCreateTest/serverConfigurationCreateTest.htm HTTP/1.1\n" +
             "Accept: */*\n" +
             "Accept-Language: ko\n" +
@@ -20,14 +20,13 @@ public class HttpRequestParserTest {
             "Connection: Keep-Alive\n" +
             "\n";
 
-    @Test()
-    public void testGETRequest() {
-        String requestLine = MOCK_GET_HTTP_REQUEST.substring(0, MOCK_GET_HTTP_REQUEST.indexOf("\n"));
+    public static HttpRequest createMockHttpRequest(String mockHttpRequestString) {
+        String requestLine = mockHttpRequestString.substring(0, mockHttpRequestString.indexOf("\n"));
 
         HttpRequestParser httpRequestParser = new HttpRequestParser();
         httpRequestParser.setRequestLine(requestLine);
 
-        StringTokenizer tokenizer = new StringTokenizer(MOCK_GET_HTTP_REQUEST, "\n");
+        StringTokenizer tokenizer = new StringTokenizer(mockHttpRequestString, "\n");
         tokenizer.nextToken();
 
         while (tokenizer.hasMoreTokens()) {
@@ -35,7 +34,12 @@ public class HttpRequestParserTest {
             httpRequestParser.setHeaderLine(nextLine);
         }
 
-        HttpRequest request = httpRequestParser.toHttpRequest();
+        return httpRequestParser.toHttpRequest();
+    }
+
+    @Test()
+    public void testGETRequest() {
+        HttpRequest request = createMockHttpRequest(MOCK_GET_HTTP_REQUEST);
         Assertions.assertEquals(request.getMethod(), Method.GET);
         Assertions.assertEquals(request.getProtocol(), "HTTP");
         Assertions.assertEquals(request.getVersion(), "1.1");
