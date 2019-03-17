@@ -11,10 +11,15 @@ import java.io.IOException;
 import java.util.*;
 
 public class ServerConfiguration {
+    private static final int MIN_THREAD_COUNT = 1;
+    private static final int MAX_THREAD_COUNT = 20;
+
     private static final String MAIN_LOG_PATH = "mainLogPath";
+    private static final String THREAD_COUNT = "threadCount";
     private static final String SERVER_SPEC = "serverSpec";
 
-    private static final String THREAD_COUNT = "threadCount";
+    private static final String[] CONFIG_KEYS = {MAIN_LOG_PATH, THREAD_COUNT, SERVER_SPEC};
+
     private static final String SERVER_NAME = "serverName";
     private static final String PORT_NUMBER = "portNumber";
     private static final String DOCUMENT_PATH = "documentPath";
@@ -22,11 +27,14 @@ public class ServerConfiguration {
     private static final String INDEX_PAGE = "indexPage";
     private static final String ERROR_PAGE = "errorPage";
 
-    private static final String[] SERVER_SPEC_KEYS = {THREAD_COUNT, SERVER_NAME, PORT_NUMBER, DOCUMENT_PATH, LOG_PATH, INDEX_PAGE, ERROR_PAGE};
+    private static final String[] SERVER_SPEC_KEYS = {SERVER_NAME, PORT_NUMBER, DOCUMENT_PATH, LOG_PATH, INDEX_PAGE, ERROR_PAGE};
 
-    private static final String CODE = "code";
-    private static final String PAGE = "page";
+    private static final String ERROR_CODE = "errorCode";
+    private static final String ERROR_INDEX_PAGE = "errorIndexPage";
 
+    private static final String[] ERROR_PAGE_KEYS = {ERROR_CODE, ERROR_INDEX_PAGE};
+
+    private final int threadCount;
     private final String mainLogPath;
     private final Map<Integer, List<ServerSpec>> serverSpecFinder = new HashMap<>();
 
@@ -35,18 +43,19 @@ public class ServerConfiguration {
 
         JSONObject serverJSONObject = (JSONObject) new JSONParser().parse(fileReader);
 
-        if (!isContainServerConfigurationKey(serverJSONObject)) {
+        if (isNotContainServerConfigurationKey(serverJSONObject)) {
             throw new JSONKeyNotFoundException();
         }
 
         this.mainLogPath = (String) serverJSONObject.get(MAIN_LOG_PATH);
+        this.threadCount = (int)Math.min(MAX_THREAD_COUNT, Math.max(MIN_THREAD_COUNT, (long) serverJSONObject.get(THREAD_COUNT)));
 
         JSONArray serverSpecJSONArray = (JSONArray) serverJSONObject.get(SERVER_SPEC);
 
         for (Object serverSpecObject : serverSpecJSONArray) {
             JSONObject serverSpecJSON = (JSONObject) serverSpecObject;
 
-            if (!isContainServerSpecKeys(serverSpecJSON)) {
+            if (isNotContainServerSpecKeys(serverSpecJSON)) {
                 throw new JSONKeyNotFoundException();
             }
 
@@ -55,34 +64,33 @@ public class ServerConfiguration {
         }
     }
 
-    private static boolean isContainServerConfigurationKey(JSONObject jsonObject) {
-        return jsonObject.containsKey(MAIN_LOG_PATH) && jsonObject.containsKey(SERVER_SPEC);
+    private static boolean isNotContainsKeys(JSONObject jsonObject, String[] keys) {
+        return !Arrays.stream(keys).allMatch(jsonObject::containsKey);
     }
 
-    private static boolean isContainServerSpecKeys(JSONObject jsonObject) {
-        boolean isKeyExist = Arrays.stream(SERVER_SPEC_KEYS).allMatch(jsonObject::containsKey);
+    private static boolean isNotContainServerConfigurationKey(JSONObject jsonObject) {
+        return isNotContainsKeys(jsonObject, CONFIG_KEYS);
+    }
 
-        if (!isKeyExist) {
-            return false;
+    private static boolean isNotContainServerSpecKeys(JSONObject jsonObject) {
+        if (isNotContainsKeys(jsonObject, SERVER_SPEC_KEYS)) {
+            return true;
         }
 
         JSONArray errorPageJSONArray = (JSONArray) jsonObject.get(ERROR_PAGE);
         for (Object errorPageObject : errorPageJSONArray) {
             JSONObject errorPageJSONObject = (JSONObject) errorPageObject;
 
-            if ( errorPageJSONObject.containsKey(CODE) && errorPageJSONObject.containsKey(PAGE)) {
-                continue;
+            if (isNotContainsKeys(errorPageJSONObject, ERROR_PAGE_KEYS)) {
+                return true;
             }
-
-            return false;
         }
-        return true;
+        return false;
     }
 
     private ServerSpec parseServerSpec(JSONObject jsonObject) throws ClassCastException {
         ServerSpecBuilder serverSpecBuilder
                 = new ServerSpecBuilder()
-                .setThreadCount((Long) jsonObject.get(THREAD_COUNT))
                 .setServerName((String) jsonObject.get(SERVER_NAME))
                 .setPortNumber((Long) jsonObject.get(PORT_NUMBER))
                 .setDocumentPath((String) jsonObject.get(DOCUMENT_PATH))
@@ -92,7 +100,9 @@ public class ServerConfiguration {
         JSONArray errorPageJSONArray = (JSONArray)jsonObject.get(ERROR_PAGE);
         for (Object errorPageObject : errorPageJSONArray) {
             JSONObject errorPageJSONObject = (JSONObject) errorPageObject;
-            serverSpecBuilder.addErrorPage((long)errorPageJSONObject.get(CODE), (String) errorPageJSONObject.get(PAGE));
+            long errorPageCode = (long)errorPageJSONObject.get(ERROR_CODE);
+            String errorIndexPage = (String) errorPageJSONObject.get(ERROR_INDEX_PAGE);
+            serverSpecBuilder.addErrorPage(errorPageCode, errorIndexPage);
         }
 
         return serverSpecBuilder.build();
@@ -106,6 +116,10 @@ public class ServerConfiguration {
         serverSpecFinder
                 .get(serverSpec.getPortNumber())
                 .add(serverSpec);
+    }
+
+    public int getThreadCount() {
+        return this.threadCount;
     }
 
     public String getMainLogPath() {

@@ -21,17 +21,20 @@ public class ServerConfigurationTest {
         String serverConfigFilePath = FileUtils.getResourcePathOrNull("server.json");
         ServerConfiguration serverConfiguration = new ServerConfiguration(serverConfigFilePath);
 
+        Assertions.assertEquals(serverConfiguration.getThreadCount(), 20);
+        Assertions.assertEquals(serverConfiguration.getMainLogPath(), "log");
+
+
         for (ServerSpec serverSpec : serverConfiguration.getServerSpecs(1111)) {
-            doAssertEquals(serverSpec, 1);
+            doServerSpecAssertEquals(serverSpec, 1);
         }
 
         for (ServerSpec serverSpec : serverConfiguration.getServerSpecs(2222)) {
-            doAssertEquals(serverSpec, 2);
+            doServerSpecAssertEquals(serverSpec, 2);
         }
     }
 
-    private void doAssertEquals(ServerSpec serverSpec, int prefix) {
-        Assertions.assertEquals(serverSpec.getThreadCount(), 20 - prefix);
+    private void doServerSpecAssertEquals(ServerSpec serverSpec, int prefix) {
         Assertions.assertEquals(serverSpec.getServerName(), "mommoo"+prefix+".com");
         Assertions.assertEquals(serverSpec.getPortNumber(), 1000*prefix + 100*prefix + 10*prefix + prefix);
         Assertions.assertEquals(serverSpec.getDocumentPath(), "home"+prefix);

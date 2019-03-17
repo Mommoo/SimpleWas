@@ -1,33 +1,35 @@
-[
-  {
-    "threadCount" : 19,
-    "serverName" : "mommoo1.com",
-    "portNumber" : 1111,
-    "documentPath" : "home1",
-    "logPath" : "log1",
-    "indexPage" : "index1.html",
-    "errorPage" : [
-      {
-        "code" : 403,
-        "page": "error1403.html"
-      },
-      {
-        "code" : 404,
-        "page": "error1404.html"
-      },
-      {
-        "code" : 500,
-        "page": "error1500.html"
-      }
-    ]
-  },
-  {
-    "threadCount" : 18,
-    "serverName" : "mommoo2.com",
-    "portNumber" : 2222,
-    "documentPath" : "home2",
-    "logPath" : "log2",
-    "indexPage" : "index2.html",
-    "errorPage" : []
-  }
-]
+{
+  "mainLogPath" : "log",
+  "threadCount" : 20,
+  "serverSpec": [
+    {
+      "serverName" : "mommoo1.com",
+      "portNumber" : 1111,
+      "documentPath" : "home1",
+      "logPath" : "log1",
+      "indexPage" : "index1.html",
+      "errorPage" : [
+        {
+          "errorCode" : 403,
+          "errorIndexPage": "error1403.html"
+        },
+        {
+          "errorCode" : 404,
+          "errorIndexPage": "error1404.html"
+        },
+        {
+          "errorCode" : 500,
+          "errorIndexPage": "error1500.html"
+        }
+      ]
+    },
+    {
+      "serverName" : "mommoo2.com",
+      "portNumber" : 2222,
+      "documentPath" : "home2",
+      "logPath" : "log2",
+      "indexPage" : "index2.html",
+      "errorPage" : []
+    }
+  ]
+}

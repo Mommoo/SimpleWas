@@ -7,22 +7,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ServerSpecBuilder {
-    private static final int MIN_THREAD_COUNT = 1;
-    private static final int MAX_THREAD_COUNT = 20;
     private static final int DEFAULT_SERVER_PORT = 8080;
 
-    private int threadCount;
     private String serverName;
     private int portNumber;
     private String documentPath;
     private String logPath;
     private String indexPage;
     private Map<Integer, String> errorPage = new HashMap<>();
-
-    public ServerSpecBuilder setThreadCount(long nThread) {
-        this.threadCount = (int)Math.max(MIN_THREAD_COUNT, Math.min(nThread, MAX_THREAD_COUNT));
-        return this;
-    }
 
     public ServerSpecBuilder setServerName(String serverName) {
         this.serverName = serverName;
@@ -60,12 +52,11 @@ public class ServerSpecBuilder {
     }
 
     public ServerSpec build() {
-        return new ServerSpec(threadCount, serverName, portNumber, documentPath, logPath, indexPage, errorPage);
+        return new ServerSpec(serverName, portNumber, documentPath, logPath, indexPage, errorPage);
     }
 
     public static ServerSpec buildDefault() {
         return new ServerSpecBuilder()
-                .setThreadCount(MAX_THREAD_COUNT/2)
                 .setServerName("localHost")
                 .setPortNumber(DEFAULT_SERVER_PORT)
                 .setDocumentPath("home")
