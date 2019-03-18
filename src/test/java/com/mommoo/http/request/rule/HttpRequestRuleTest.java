@@ -1,5 +1,7 @@
 package com.mommoo.http.request.rule;
 
+import com.mommoo.conf.ServerSpec;
+import com.mommoo.conf.ServerSpecBuilder;
 import com.mommoo.http.request.HttpRequest;
 import com.mommoo.http.request.HttpRequestParserTest;
 import org.junit.jupiter.api.Assertions;
@@ -14,7 +16,7 @@ import java.util.function.Consumer;
  * {@link HttpRequestParserTest} 의 검증 테스트 먼저 통과해야 한다.
  */
 public class HttpRequestRuleTest {
-    private static final String MOCK_HTTP_REQUEST =
+    private static final String MOCK_HTTP_REQUEST_PATTEN =
             "Get %s HTTP/1.1\n" +
                     "Accept: */*\n" +
                     "Accept-Language: ko\n" +
@@ -26,13 +28,22 @@ public class HttpRequestRuleTest {
                     "Connection: Keep-Alive\n" +
                     "\n";
 
-    private static String createHttpRequestByURI(String URI) {
-        return String.format(MOCK_HTTP_REQUEST, URI);
+    private static String createMockHttpRequestByURI(String URI) {
+        return String.format(MOCK_HTTP_REQUEST_PATTEN, URI);
+    }
+
+    private static ServerSpec createMockServerSpec() {
+        return new ServerSpecBuilder().setDocumentPath("/var/www")
+                .setLogPath("log")
+                .setIndexPage("index.html")
+                .setPortNumber(6766)
+                .setServerName("mommoo.com")
+                .build();
     }
 
     private static void httpRequestForEachByURICase(String[] URIs, Consumer<HttpRequest> httpRequestConsumer) {
         for (String invalidateURI : URIs) {
-            String httpRequestStringByURI = createHttpRequestByURI(invalidateURI);
+            String httpRequestStringByURI = createMockHttpRequestByURI(invalidateURI);
             HttpRequest mockHttpRequest = HttpRequestParserTest.createMockHttpRequest(httpRequestStringByURI);
             httpRequestConsumer.accept(mockHttpRequest);
         }
@@ -41,6 +52,8 @@ public class HttpRequestRuleTest {
     @Test
     @DisplayName("HttpResourceFileExtensionRule 로직 검증 테스트")
     public void httpResourceFileExtensionRuleTest() {
+        ServerSpec mockServerSpec = createMockServerSpec();
+
         String[] fileExtensions = {"exe", "htm", "jar", "java"};
 
         HttpResourceFileExtensionRule
@@ -54,7 +67,7 @@ public class HttpRequestRuleTest {
         };
 
         httpRequestForEachByURICase(invalidateURIs, httpRequest -> {
-            boolean isInValidate = !httpResourceFileExtensionRule.isValidateRequest(httpRequest).isValidate;
+            boolean isInValidate = !httpResourceFileExtensionRule.isValidateRequest(mockServerSpec, httpRequest).isValidate;
             Assertions.assertTrue(isInValidate);
         });
 
@@ -66,7 +79,7 @@ public class HttpRequestRuleTest {
         };
 
         httpRequestForEachByURICase(validateURIs, httpRequest -> {
-            boolean isValidate = httpResourceFileExtensionRule.isValidateRequest(httpRequest).isValidate;
+            boolean isValidate = httpResourceFileExtensionRule.isValidateRequest(mockServerSpec, httpRequest).isValidate;
             Assertions.assertTrue(isValidate);
         });
     }
@@ -74,7 +87,7 @@ public class HttpRequestRuleTest {
     @Test
     @DisplayName("HttpResourceSearchRule 로직 검증 테스트")
     public void httpResourceSearchRuleTest() {
-        String documentPath = "/var/www";
+        ServerSpec mockServerSpec = createMockServerSpec();
 
         String[] invalidateURIs = {
                 "/../../game.exe",
@@ -88,15 +101,15 @@ public class HttpRequestRuleTest {
                 "/home/../hello.html"
         };
 
-        HttpResourceSearchRule httpResourceSearchRule = new HttpResourceSearchRule(documentPath);
+        HttpResourceSearchRule httpResourceSearchRule = new HttpResourceSearchRule();
 
         httpRequestForEachByURICase(invalidateURIs, httpRequest -> {
-            boolean isInvalidate = !httpResourceSearchRule.isValidateRequest(httpRequest).isValidate;
+            boolean isInvalidate = !httpResourceSearchRule.isValidateRequest(mockServerSpec, httpRequest).isValidate;
             Assertions.assertTrue(isInvalidate);
         });
 
         httpRequestForEachByURICase(validateURIs, httpRequest -> {
-            boolean isValidate = httpResourceSearchRule.isValidateRequest(httpRequest).isValidate;
+            boolean isValidate = httpResourceSearchRule.isValidateRequest(mockServerSpec, httpRequest).isValidate;
             Assertions.assertTrue(isValidate);
         });
     }

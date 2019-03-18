@@ -36,10 +36,8 @@
     </appender>
 
 
-
     <root level="debug">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="SIFT" />
-        <!--<appender-ref ref="FILE"/>-->
     </root>
 </configuration>

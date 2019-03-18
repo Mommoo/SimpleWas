@@ -1,7 +1,8 @@
 package com.mommoo.conf;
 
+import com.mommoo.http.HttpStatus;
+
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 public class ServerSpec {
@@ -39,6 +40,10 @@ public class ServerSpec {
 
     public String getIndexPage() {
         return indexPage;
+    }
+
+    public String getErrorIndexPageOrNull(HttpStatus httpStatus) {
+        return errorPage.get(httpStatus.getCodeNum());
     }
 
     public Map<Integer, String> getErrorPage() {

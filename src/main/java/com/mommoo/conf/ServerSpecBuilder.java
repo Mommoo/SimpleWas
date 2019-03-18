@@ -54,17 +54,4 @@ public class ServerSpecBuilder {
     public ServerSpec build() {
         return new ServerSpec(serverName, portNumber, documentPath, logPath, indexPage, errorPage);
     }
-
-    public static ServerSpec buildDefault() {
-        return new ServerSpecBuilder()
-                .setServerName("localHost")
-                .setPortNumber(DEFAULT_SERVER_PORT)
-                .setDocumentPath("home")
-                .setLogPath("log")
-                .setIndexPage("index.html")
-                .addErrorPage(403, "error403.html")
-                .addErrorPage(404, "error404.html")
-                .addErrorPage(500, "error500.html")
-                .build();
-    }
 }

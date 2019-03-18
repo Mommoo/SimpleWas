@@ -1,13 +1,11 @@
 package com.mommoo.http;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * https://developer.mozilla.org/ko/docs/Web/HTTP/Headers
  */
-public enum HeaderType {
+public enum HttpHeaderType {
     HOST("Host"),
     ACCEPT("Accept"),
     ACCEPT_LANGUAGE("Accept-Language"),
@@ -17,19 +15,25 @@ public enum HeaderType {
     USER_AGENT("User-Agent"),
     CONNECTION("Connection"),
     CONTENT_TYPE("Content-Type"),
-    CONTENT_LENGTH("Content-Length");
+    CONTENT_LENGTH("Content-Length"),
+    SERVER("Server"),
+    DATE("Date");
 
-    private final String key;
+    private final String text;
 
-    private HeaderType(String key) {
-        this.key = key;
+    private HttpHeaderType(String text) {
+        this.text = text;
     }
 
     private boolean isLowerCaseMatched(String lowercaseString) {
-        return this.key.toLowerCase().equals(lowercaseString);
+        return this.text.toLowerCase().equals(lowercaseString);
     }
 
-    public static HeaderType of(String textHeaderType) {
+    public String getText(){
+        return text;
+    }
+
+    public static HttpHeaderType of(String textHeaderType) {
         String lowerCaseText = textHeaderType.toLowerCase();
         return Arrays.stream(values())
                 .filter(headerType -> headerType.isLowerCaseMatched(lowerCaseText))

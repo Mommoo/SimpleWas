@@ -1,87 +1,139 @@
 package com.mommoo.http.request;
 
-import com.mommoo.http.HeaderType;
-import com.mommoo.http.Method;
+import com.mommoo.http.HttpHeaderType;
+import com.mommoo.http.HttpMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 class HttpRequestParser {
     private static final Logger logger = LoggerFactory.getLogger(HttpRequestParser.class);
 
-    private Method method;
+    private String mainLogPath;
+
+    private HttpMethod httpMethod;
     private String URI;
     private String schema;
     private String protocol;
     private String version;
 
-    private Map<HeaderType, String> headerMap = new HashMap<>();
-    private Map<String, String> queryStrings = new HashMap<>();
+    private Map<HttpHeaderType, String> headerMap = new HashMap<>();
+    private Map<String, String> queryMap = new HashMap<>();
 
-    boolean setRequestLine(String requestLine) {
+    private StringBuilder body = new StringBuilder();
+
+    HttpRequestParser(String mainLogPath) {
+        this.mainLogPath = mainLogPath;
+    }
+
+    void setRequestLine(String requestLine) throws IOException {
         String[] requestLineElement = requestLine.split(" ");
 
         if (requestLineElement.length != 3) {
-            logger.info("Http 프로토콜 스펙에 맞지 않는 헤더 라인 입니다.");
-            return false;
+            throw new IOException("Http 프로토콜 스펙에 맞지 않는 헤더 라인 입니다.");
         }
 
-        this.method = Method.of(requestLineElement[0]);
+        this.httpMethod = HttpMethod.of(requestLineElement[0]);
 
-        if ( this.method == null ) {
-            logger.info("Http 프로토콜에 알맞지 않은 메서드 요청을 시도 했습니다.");
-            return false;
+        if ( this.httpMethod == null ) {
+            throw new IOException("Http 프로토콜에 알맞지 않은 메서드 요청을 시도 했습니다.");
         } else if( !requestLineElement[2].toLowerCase().contains("http")) {
-            logger.info("Http 프로토콜이 아닙니다.");
-            return false;
+            throw new IOException("Http 프로토콜이 아닙니다.");
         }
 
-        this.URI = requestLineElement[1];
+        parseURIAndQueryString(requestLineElement[1]);
+
         this.schema = requestLineElement[2];
         String[] schemaElement = this.schema.split("/");
 
         if (schemaElement.length != 2) {
-            logger.info("Http 스키마 형식이 아닙니다.");
-            return false;
+            throw new IOException("Http 스키마 형식이 아닙니다.");
         }
 
         this.protocol = schemaElement[0];
         this.version = schemaElement[1];
-
-        return true;
     }
 
     void setHeaderLine(String headerLine) {
         int typeEndIndex = headerLine.indexOf(":");
 
         if (typeEndIndex == -1) {
-            logger.info("Http 프로토콜 스펙에 맞지 않는 데이터 구성 입니다.");
+            changeLogPathToMain();
+            logger.info("Http 프로토콜 스펙에 맞지 않는 데이터 구성 입니다. ( ".concat(headerLine).concat(" )"));
             return;
         }
 
         String headerTypeData = headerLine.substring(0, typeEndIndex).trim();
-        HeaderType headerType = HeaderType.of(headerTypeData);
-        if (headerType == null) {
+        HttpHeaderType httpHeaderType = HttpHeaderType.of(headerTypeData);
+        if (httpHeaderType == null) {
+            changeLogPathToMain();
             logger.info("WAS에 등록되지 않은 헤더 타입입니다.(" + headerTypeData +")");
             return;
         }
 
-        headerMap.put(headerType, headerLine.substring(typeEndIndex+1).trim());
+        headerMap.put(httpHeaderType, headerLine.substring(typeEndIndex+1).trim());
+    }
+
+    void appendBody(String body) {
+        this.body.append(body);
+    }
+
+    private void changeLogPathToMain() {
+        MDC.put("logPath", mainLogPath);
+    }
+
+    private void parseURIAndQueryString(String fullURI) {
+        int queryStringIndexOf = fullURI.lastIndexOf("?");
+
+        if (queryStringIndexOf != -1) {
+            URI = fullURI.substring(0, queryStringIndexOf);
+            String queryString = fullURI.substring(queryStringIndexOf + 1);
+            parseQueryString(queryString);
+            return;
+        }
+
+        URI = fullURI;
+    }
+
+    private void parseQueryString(String queryString) {
+        String[] queries = queryString.split("&");
+        for (String query : queries) {
+            int keyIndex = query.indexOf("=");
+            if (keyIndex == -1) {
+                continue;
+            }
+
+            String key = query.substring(0, keyIndex);
+            String value = query.substring(keyIndex+1);
+            changeLogPathToMain();
+            logger.info("쿼리 스트링 파싱 [ key : ".concat(key).concat(" , value : ").concat(value).concat(" ]"));
+            queryMap.put(key, value);
+        }
+    }
+
+    private void parseQueryStringAtBody() {
+        String contentType = headerMap.get(HttpHeaderType.CONTENT_TYPE);
+        if (contentType == null) {
+            parseQueryString(body.toString());
+        } else if(contentType.contains("/")) {
+            String contentDataType = contentType.substring(0, contentType.indexOf("/"));
+            if (contentDataType.equals("*") || contentDataType.equals("text")) {
+                parseQueryString(body.toString());
+            }
+        }
     }
 
     HttpRequest toHttpRequest() {
+        parseQueryStringAtBody();
 
         return new HttpRequest() {
             @Override
-            public Method getMethod() {
-                return HttpRequestParser.this.method;
-            }
-
-            @Override
-            public String getContextPath() {
-                return null;
+            public HttpMethod getMethod() {
+                return HttpRequestParser.this.httpMethod;
             }
 
             @Override
@@ -90,13 +142,13 @@ class HttpRequestParser {
             }
 
             @Override
-            public Map<HeaderType, String> getHeaders() {
+            public Map<HttpHeaderType, String> getHeaders() {
                 return new HashMap<>(headerMap);
             }
 
             @Override
-            public String getHeader(HeaderType headerType) {
-                return headerMap.get(headerType);
+            public String getHeader(HttpHeaderType httpHeaderType) {
+                return headerMap.get(httpHeaderType);
             }
 
             @Override
@@ -115,22 +167,23 @@ class HttpRequestParser {
             }
 
             @Override
-            public Map<String, String> getParameterMap() {
-                return new HashMap<>(queryStrings);
+            public Map<String, String> getParameters() {
+                return new HashMap<>(queryMap);
             }
 
             @Override
-            public String getParameterValue(String parameterName) {
-                return queryStrings.get(parameterName);
+            public String getParameter(String parameterName) {
+                return queryMap.get(parameterName);
             }
 
             @Override
             public String toString() {
-                return "Method : " + getMethod()+"\n"+
+                return "HttpMethod : " + getMethod()+"\n"+
                         "URI : " + getURI()+"\n"+
                         "Protocol : " + getProtocol()+"\n"+
                         "Version : " +getVersion()+"\n"+
-                        "headers : " + headerMap +"\n";
+                        "headers : " + headerMap +"\n"+
+                        "queryStrings :" + queryMap+"\n";
             }
         };
     }

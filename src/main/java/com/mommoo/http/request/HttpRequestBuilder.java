@@ -1,61 +1,37 @@
 package com.mommoo.http.request;
 
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
-import java.util.concurrent.Callable;
-import java.util.function.Consumer;
 
-public class HttpRequestBuilder implements Runnable {
-    private static final Logger logger = LoggerFactory.getLogger(HttpRequestBuilder.class);
+public class HttpRequestBuilder {
+    private final HttpRequestParser headerParser;
 
-    private boolean isBuildComplete = false;
-    private final Socket requestSocket;
-    private final HttpRequestParser headerParser = new HttpRequestParser();
-    private Consumer<HttpRequest> onBuildCompleteListener = httpRequest -> {};
+    public HttpRequestBuilder(String mainLogPath, Socket socket) throws IOException {
+        headerParser = new HttpRequestParser(mainLogPath);
 
-    public HttpRequestBuilder(Socket requestSocket) {
-        this.requestSocket = requestSocket;
-    }
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        String requestLine = bufferedReader.readLine();
 
-    public void setOnBuildCompleteListener(Consumer<HttpRequest> onBuildCompleteListener) {
-        this.onBuildCompleteListener = onBuildCompleteListener;
-        if (this.isBuildComplete) {
-            this.onBuildCompleteListener.accept(this.headerParser.toHttpRequest());
+        this.headerParser.setRequestLine(requestLine);
+
+        String headerLine;
+
+        while (!(headerLine = bufferedReader.readLine()).equals("")) {
+            this.headerParser.setHeaderLine(headerLine);
+        }
+
+        char[] buffer = new char[2014];
+        while (bufferedReader.ready()) {
+            int len = bufferedReader.read(buffer);
+            this.headerParser.appendBody(new String(buffer, 0, len));
         }
     }
 
-    @Override
-    public void run() {
-        try {
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(requestSocket.getInputStream()));
-            String requestLine = bufferedReader.readLine();
-            boolean isValidateRequestLine = this.headerParser.setRequestLine(requestLine);
-            if (!isValidateRequestLine) {
-                return ;
-            }
-
-            String headerLine;
-
-            while (!(headerLine = bufferedReader.readLine()).equals("")) {
-                this.headerParser.setHeaderLine(headerLine);
-            }
-
-        } catch (IOException e) {
-            getProperLogger().warn("Request 소켓에 담겨온 데이터를 읽지 못했습니다.", e);
-        }
-
-        this.isBuildComplete = true;
-        this.onBuildCompleteListener.accept(headerParser.toHttpRequest());
-    }
-
-    private static final Logger getProperLogger() {
-        MDC.put("logPath", Thread.currentThread().getName());
-        return logger;
+    public HttpRequest build() {
+        return this.headerParser.toHttpRequest();
     }
 }

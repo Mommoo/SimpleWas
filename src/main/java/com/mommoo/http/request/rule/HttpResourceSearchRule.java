@@ -1,19 +1,17 @@
 package com.mommoo.http.request.rule;
 
+import com.mommoo.conf.ServerSpec;
 import com.mommoo.http.request.HttpRequest;
 
 import java.util.Collections;
 import java.util.Stack;
 
-public class HttpResourceSearchRule implements HttpRequestRule {
-    private final String documentPath;
-
-    public HttpResourceSearchRule (String documentPath) {
-        this.documentPath = documentPath;
-    }
+class HttpResourceSearchRule implements HttpRequestRule {
 
     @Override
-    public HttpRequestRuleResult isValidateRequest(HttpRequest httpRequest) {
+    public HttpRequestRuleResult isValidateRequest(ServerSpec serverSpec, HttpRequest httpRequest) {
+        String documentPath = serverSpec.getDocumentPath();
+
         String[] documentDirectories = documentPath.split("/");
         Stack<String> directoryStack = new Stack<>();
         Collections.addAll(directoryStack, documentDirectories);
