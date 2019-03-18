@@ -9,14 +9,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class ServerContentsFinder {
-    private ServerContents serverContents;
-    private Path filePath;
+    private final ServerContents serverContents;
 
     public ServerContentsFinder(ServerSpec serverSpec, String URI, HttpStatus httpStatus) {
         boolean isHttpOK = httpStatus == HttpStatus.CODE_200;
 
         if (isHttpOK && isServletRequest(URI)) {
-            this.serverContents = ServerContents.SERVLET;
+            SimpleServlet servlet = createServlet(URI);
+            serverContents = new ServerContents(HttpStatus.CODE_200, ServerContentsType.SERVLET, servlet);
             return;
         }
 
@@ -29,18 +29,20 @@ public class ServerContentsFinder {
         String documentPath = serverSpec.getDocumentPath();
 
         if (isFileNotExist(documentPath, fileURI)) {
-            serverContents = ServerContents.NONE;
-        } else {
-            serverContents = ServerContents.FILE;
-            this.filePath = Paths.get(documentPath, fileURI);
+            HttpStatus properStatus = isHttpOK ? HttpStatus.CODE_404 : httpStatus;
+            serverContents = new ServerContents(properStatus, ServerContentsType.NONE, null);
+            return;
         }
+
+        Path filePath = Paths.get(documentPath, fileURI);
+        serverContents = new ServerContents(httpStatus, ServerContentsType.FILE, filePath);
     }
 
-    public ServerContents getServerContents() {
+    public ServerContents getContents() {
         return serverContents;
     }
 
-    public SimpleServlet getServlet(String URI) {
+    private SimpleServlet createServlet(String URI) {
         String lastResourceName = URI.substring(URI.lastIndexOf("/") + 1);
         try {
             return (SimpleServlet) Class.forName(lastResourceName).newInstance();
@@ -52,10 +54,6 @@ public class ServerContentsFinder {
             e.printStackTrace();
         }
         return null;
-    }
-
-    public Path getFilePath() {
-        return filePath;
     }
 
     private static boolean isFileNotExist(String documentPath, String fileURI) {
