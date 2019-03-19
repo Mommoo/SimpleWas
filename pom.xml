@@ -19,6 +19,9 @@
     </properties>
 
     <build>
+        <!-- 패키징 이름 설정 -->
+        <finalName>was</finalName>
+
         <plugins>
             <!-- JUnit 테스트를 포함시키기 위한 surefire 플러그인 설정 -->
             <plugin>
@@ -40,7 +43,7 @@
                     <appendAssemblyId>false</appendAssemblyId>
                     <archive>
                         <manifest>
-                            <mainClass>Main</mainClass>
+                            <mainClass>SimpleServerBoot</mainClass>
                         </manifest>
                     </archive>
 

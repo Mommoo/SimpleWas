@@ -8,6 +8,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+/**
+ * {@link ServerSpec}에 맞는 컨텐츠를 찾는 역할을 가진 클래스 입니다.
+ *
+ * 컨텐츠를 찾는 과정에서 {@link HttpStatus}가 변경될 수도 있습니다.
+ *  ex) 올바른 요청이지만, 컨텐츠를 찾이 못한 경우 : {@link HttpStatus#CODE_200} -> {@link HttpStatus#CODE_404}
+ *
+ * 찾은 결과물을 {@link ServerContents} 인스턴스로 제공합니다.
+ *
+ * @author mommoo
+ */
 public class ServerContentsFinder {
     private final ServerContents serverContents;
 

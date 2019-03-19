@@ -3,7 +3,11 @@ package com.mommoo.http;
 import java.util.Arrays;
 
 /**
- * https://developer.mozilla.org/ko/docs/Web/HTTP/Headers
+ * https://developer.mozilla.org/ko/docs/Web/HTTP/Headers 스펙에서 필요한 몇몇 HTTP 스펙을 정의했습니다.
+ *
+ * 모든 HTTP 헤더 스펙을 구현하진 않았습니다.
+ *
+ * @author mommoo
  */
 public enum HttpHeaderType {
     HOST("Host"),

@@ -9,6 +9,14 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Http Response 데이터 구성을 담당하는 클래스 입니다.
+ * 제공하는 {@link Writer} 객체는 스트림에 작성되는것이 아닌 메모리에 작성됩니다. {@link #bodyBuilder}
+ *
+ * 추후 {@link #toString()}을 통해, Http Response 데이터를 최종 구성합니다.
+ *
+ * @author mommoo
+ */
 public class HttpResponseHandler implements HttpResponse {
     private String schema = "HTTP/1.1";
     private HttpStatus status = HttpStatus.CODE_200;
@@ -40,10 +48,10 @@ public class HttpResponseHandler implements HttpResponse {
             }
         };
 
-        fillBasicHeaderData();
+        fillDefaultHeaderData();
     }
 
-    private void fillBasicHeaderData() {
+    private void fillDefaultHeaderData() {
         setHeaderData(HttpHeaderType.SERVER, "MommooSimpleWas");
         setHeaderData(HttpHeaderType.CONTENT_TYPE, "text/html");
     }

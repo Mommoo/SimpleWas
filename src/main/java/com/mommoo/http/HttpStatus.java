@@ -1,5 +1,10 @@
 package com.mommoo.http;
 
+/**
+ * Http 상태코드 와 메세지를 정의한 Enum 클래스 입니다.
+ *
+ * @author mommoo
+ */
 public enum HttpStatus {
     CODE_200(200, "OK"),
     CODE_403(403, "Forbidden"),

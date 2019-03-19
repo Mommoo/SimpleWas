@@ -6,6 +6,12 @@ import com.mommoo.http.request.HttpRequest;
 import java.util.Collections;
 import java.util.Stack;
 
+/**
+ * 유효하지 않은 파일 경로 검색을 검증 하는 클래스 입니다.
+ * 스택 자료구조를 이용하여, 사용자가 요구하는 최종경로가 올바른지 검사 했습니다.
+ *
+ * @author mommoo
+ */
 class HttpResourceSearchRule implements HttpRequestRule {
 
     @Override

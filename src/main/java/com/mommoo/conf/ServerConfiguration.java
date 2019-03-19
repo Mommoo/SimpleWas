@@ -10,6 +10,14 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
+/**
+ * 서버 설정 파일을 Object화 하기 위한 파싱의 역할을 지닌 클래스 입니다.
+ *
+ * Jackson 같은 라이브러리를 쓴다면 더 쉽게 Object화가 쉽겠지만,
+ * 파싱 과정을 직접 보여주고 싶어, 하드 코딩부분만 도와줄수 있는 SimpleJSON 라이브러리로 처리 했습니다.
+ *
+ * @author mommoo
+ */
 public class ServerConfiguration {
     private static final int MIN_THREAD_COUNT = 1;
     private static final int MAX_THREAD_COUNT = 20;

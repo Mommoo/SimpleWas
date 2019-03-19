@@ -6,6 +6,12 @@ import com.mommoo.http.request.HttpRequest;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 검증 해야 할, 모든 HttpRequest 검증 규칙을 한곳에 모은 클래스 입니다.
+ * 필터 방식으로, 모든 규칙을 통과해야 최종 검증을 완료 합니다.
+ *
+ * @author mommoo
+ */
 public class HttpRequestRuleInspector implements HttpRequestRule{
     private static final String[] INVALID_FILE_EXTENSIONS = {"exe"};
 

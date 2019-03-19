@@ -1,7 +1,6 @@
 package com.mommoo.http.response;
 
 import com.mommoo.http.HttpStatus;
-import com.mommoo.utils.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -11,6 +10,18 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.file.Path;
 
+/**
+ * 소켓에 출력을 담당하는 클래스입니다.
+ * {@link HttpResponseHandler}가 구성하는 Response Text 데이터를 이용하여 소켓에 출력합니다.
+ *
+ * 출력 기능은 다음과 같이 3가지가 존재합니다.
+ *
+ *  1. 자체 HTML 출력  {@link #sendBasicHTMLPage(HttpStatus, String)}
+ *  2. 파일 출력 {@link #sendFile(HttpStatus, Path, String)}
+ *  3. HttpResponse 출력 {@link #send(HttpResponse, String)}
+ *
+ *  @author mommoo
+ */
 public class HttpResponseSender {
     private static Logger logger = LoggerFactory.getLogger(HttpResponseSender.class);
     private final static String SEND_ERROR_MSG = "HttpResponse를 클라이언트에게 보내지 못했습니다.";

@@ -10,6 +10,12 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Http 요청 메시지를 분석하고, 정보를 가공하는 클래스입니다.
+ * 가공한 데아터를 {@link HttpRequest}로 만들어 줍니다.
+ *
+ * @author mommoo
+ */
 class HttpRequestParser {
     private static final Logger logger = LoggerFactory.getLogger(HttpRequestParser.class);
 

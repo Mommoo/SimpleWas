@@ -8,6 +8,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * 유효하지 않은 파일 확장자를 검사하는 검증 클래스입니다.
+ *
+ * @author mommoo
+ */
 class HttpResourceFileExtensionRule implements HttpRequestRule {
     private Set<String> fileExtensionSet = new HashSet<>();
 

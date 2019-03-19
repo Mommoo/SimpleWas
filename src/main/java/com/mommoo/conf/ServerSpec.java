@@ -5,6 +5,11 @@ import com.mommoo.http.HttpStatus;
 import java.util.Collections;
 import java.util.Map;
 
+/**
+ * 서버 설정 파일의 'serverSpec'에 해당하는 데이터 값을 정의한 클래스 입니다.
+ *
+ * @author mommoo
+ */
 public class ServerSpec {
     private final String serverName;
     private final int portNumber;
@@ -48,5 +53,14 @@ public class ServerSpec {
 
     public Map<Integer, String> getErrorPage() {
         return Collections.unmodifiableMap(errorPage);
+    }
+
+    @Override
+    public String toString() {
+        return "[ ServerName=".concat(serverName)
+                .concat(", PortNumber=").concat(Integer.toString(portNumber)
+                        .concat(", DocumentPath=").concat(documentPath)
+                        .concat(", LogPath=").concat(logPath)
+                        .concat(" ]"));
     }
 }

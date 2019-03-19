@@ -7,6 +7,11 @@ import java.io.IOException;
 import java.io.Writer;
 import java.text.SimpleDateFormat;
 
+/**
+ * 현재 시간 스탬프를 출력하는 서블릿 클래스 입니다.
+ *
+ * @author mommoo
+ */
 public class TimeStampPage implements SimpleServlet {
     @Override
     public void service(HttpRequest httpRequest, HttpResponse httpResponse) {

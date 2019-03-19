@@ -1,11 +1,13 @@
 package com.mommoo.conf;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * {@link ServerSpec}의 빌더 클래스 입니다.
+ *
+ * @author mommoo
+ */
 public class ServerSpecBuilder {
     private static final int DEFAULT_SERVER_PORT = 8080;
 
