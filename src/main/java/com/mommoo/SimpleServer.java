@@ -1,6 +1,7 @@
 package com.mommoo;
 
 import com.mommoo.conf.ServerSpec;
+import com.mommoo.contents.ServerContents;
 import com.mommoo.contents.ServerContentsFinder;
 import com.mommoo.http.HttpHeaderType;
 import com.mommoo.http.HttpStatus;
@@ -64,21 +65,37 @@ public class SimpleServer {
         }
     }
 
-    public void start() throws IOException {
+    public void start() {
         printLogOfServerInfo();
 
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
 
-        ServerSocket serverSocket = new ServerSocket(portNumber);
+        ServerSocket serverSocket = null;
+        try {
+            serverSocket = new ServerSocket(portNumber);
+        } catch (IOException e) {
+            logger.error("서버 소켓을 열지 못했습니다.", e);
+            return;
+        }
 
         while (true) {
             logger.info(this + "의 Connection Listen 시작");
 
-            Socket socket = serverSocket.accept();
+            Socket tempSocket = null;
+            try {
+                tempSocket = serverSocket.accept();
+            } catch (IOException e) {
+                logger.error("소켓을 받지 못했습니다.", e);
+                continue;
+            }
 
-            printLogOfClientInfo(socket);
+            printLogOfClientInfo(tempSocket);
+
+            // 자바 익명클래스는 final 변수로 받아야 하므로, 어쩔 수 없이 추가적인 코드를 넣었습니다.
+            final Socket socket = tempSocket;
 
             executorService.submit(() -> {
+                HttpResponseSender responseSender = new HttpResponseSender(socket);
                 HttpRequestBuilder requestBuilder = null;
 
                 try {
@@ -86,7 +103,7 @@ public class SimpleServer {
                 } catch (IOException io) {
                     setMainLogPath();
                     logger.error("HttpRequest 파싱에 실패했습니다.", io);
-                    HttpResponseSender.sendBasicHTMLPage(HttpStatus.CODE_500, socket, mainLogPath);
+                    responseSender.sendBasicHTMLPage(HttpStatus.CODE_500, mainLogPath);
                     return;
                 }
 
@@ -97,7 +114,7 @@ public class SimpleServer {
 
                 if (serverSpec == null) {
                     printLogOfInvalidateHostAccess(host);
-                    HttpResponseSender.sendBasicHTMLPage(HttpStatus.CODE_412, socket, mainLogPath);
+                    responseSender.sendBasicHTMLPage(HttpStatus.CODE_412, mainLogPath);
                     return;
                 }
 
@@ -111,34 +128,35 @@ public class SimpleServer {
 
                 HttpStatus httpStatus = ruleResult.isValidate ? HttpStatus.CODE_200 : HttpStatus.CODE_403;
 
-                ServerContentsFinder contentsFinder = new ServerContentsFinder(serverSpec, httpRequest.getURI(), httpStatus);
 
                 String serverSpecLogPath = serverSpec.getLogPath();
 
-                switch (contentsFinder.getServerContents()) {
+                ServerContentsFinder contentsFinder = new ServerContentsFinder(serverSpec, httpRequest.getURI(), httpStatus);
+                ServerContents serverContents = contentsFinder.getContents();
+                switch (serverContents.getType()) {
                     case NONE:
-                        //403 -> 올때가 있꼬
-                        //200 -> 올때가 있네;
-                        HttpStatus targetStatus = httpStatus == HttpStatus.CODE_200 ? HttpStatus.CODE_404 : httpStatus;
-                        HttpResponseSender.sendBasicHTMLPage(targetStatus, socket, serverSpecLogPath);
-                        System.out.println("NONE!!");
+                        responseSender.sendBasicHTMLPage(serverContents.getHttpStatus(), serverSpecLogPath);
                         break;
                     case SERVLET:
                         HttpResponse httpResponse = new HttpResponseHandler();
-                        SimpleServlet simpleServlet = contentsFinder.getServlet(httpRequest.getURI());
+                        httpResponse.setStatus(serverContents.getHttpStatus());
+
+                        SimpleServlet simpleServlet = (SimpleServlet)serverContents.get();
                         simpleServlet.service(httpRequest, httpResponse);
-                        HttpResponseSender.send(httpResponse, socket, serverSpecLogPath);
+
+                        responseSender.send(httpResponse, serverSpecLogPath);
                         break;
                     case FILE:
-                        Path filePath = contentsFinder.getFilePath();
-                        HttpResponseSender.sendFile(httpStatus, filePath, socket, serverSpecLogPath);
+                        Path filePath = (Path)serverContents.get();
+                        responseSender.sendFile(httpStatus, filePath, serverSpecLogPath);
                         break;
                 }
 
                 try {
                     socket.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    setMainLogPath();
+                    logger.error("socket를 닫지 못했습니다.", e);
                 }
             });
 

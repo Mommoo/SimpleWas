@@ -7,10 +7,9 @@ import org.json.simple.parser.ParseException;
 import java.io.IOException;
 import java.util.List;
 
-public class Main {
+public class SimpleServerBoot {
     public static void main(String[] args) {
         try {
-
             String serverConfigPath = args[0];
             ServerConfiguration serverConfiguration = new ServerConfiguration(serverConfigPath);
 
@@ -22,13 +21,7 @@ public class Main {
                 List<ServerSpec> serverSpecList = serverConfiguration.getServerSpecs(portNumber);
                 simpleServer.addServerSpecs(serverSpecList);
 
-                new Thread(()->{
-                    try {
-                        simpleServer.start();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }).start();
+                new Thread(simpleServer::start).start();
 
             }
 

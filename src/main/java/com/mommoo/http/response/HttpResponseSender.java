@@ -15,33 +15,35 @@ public class HttpResponseSender {
     private static Logger logger = LoggerFactory.getLogger(HttpResponseSender.class);
     private final static String SEND_ERROR_MSG = "HttpResponse를 클라이언트에게 보내지 못했습니다.";
 
-    private HttpResponseSender() {
+    private final Socket socket;
 
+    public HttpResponseSender(Socket socket) {
+        this.socket = socket;
     }
 
-    public static void sendBasicHTMLPage(HttpStatus httpStatus, Socket socket, String logPath) {
+    public void sendBasicHTMLPage(HttpStatus httpStatus, String logPath) {
         HttpResponseHandler httpResponseHandler = new HttpResponseHandler();
         httpResponseHandler.setStatus(httpStatus);
         try {
             httpResponseHandler.writeBasicHTMLPage();
-            send(httpResponseHandler, socket, logPath);
+            send(httpResponseHandler, logPath);
         } catch (IOException e) {
             printErrorLog(logPath, e);
         }
     }
 
-    public static void sendFile(HttpStatus httpStatus, Path filePath, Socket socket, String logPath) {
+    public void sendFile(HttpStatus httpStatus, Path filePath, String logPath) {
         HttpResponseHandler httpResponseHandler = new HttpResponseHandler();
         httpResponseHandler.setStatus(httpStatus);
         try {
             httpResponseHandler.writeFile(filePath);
-            send(httpResponseHandler, socket, logPath);
+            send(httpResponseHandler, logPath);
         } catch (IOException io) {
             printErrorLog(logPath, io);
         }
     }
 
-    public static void send(HttpResponse httpResponse, Socket socket, String logPath) {
+    public void send(HttpResponse httpResponse, String logPath) {
         try {
             OutputStream outputStream = socket.getOutputStream();
             outputStream.write(httpResponse.toString().getBytes());
